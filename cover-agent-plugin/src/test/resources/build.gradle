@@ -1,6 +1,8 @@
+
 plugins {
     id 'java'
-    id 'ai.qodo.plugin.cover-agent'
+    id 'ai.qodo.plugin.cover-agent' version '0.0.1'
+    id 'jacoco'
 }
 
 group = 'com.davidparry'
@@ -16,6 +18,7 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.11.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
 }
+
 coverAgent {
     apiKey = System.getenv("OPENAI_API_KEY")
     coverAgentBinaryPath = "./mock.sh"
@@ -23,6 +26,17 @@ coverAgent {
     iterations = 1
 }
 
+
 test {
     useJUnitPlatform()
 }
+
+
+jacocoTestReport {
+    dependsOn test, compileJava
+    reports {
+        csv.required.set(true)
+    }
+}
+
+check.finalizedBy jacocoTestReport

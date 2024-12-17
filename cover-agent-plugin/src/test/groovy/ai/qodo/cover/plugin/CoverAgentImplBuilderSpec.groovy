@@ -4,7 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import spock.lang.Specification
 
-class CoverAgentBuilderSpec extends Specification {
+class CoverAgentImplBuilderSpec extends Specification {
     void setup() {
     }
     // Builder correctly initializes all fields
@@ -14,11 +14,11 @@ class CoverAgentBuilderSpec extends Specification {
         Logger logger = Mock(Logger)
         def builder = new CoverAgentBuilder()
                 .apiKey("testApiKey")
-                .wanDBApiKey("testWanDBApiKey")
+                .model("testWanDBApiKey")
                 .iterations(5)
                 .coverage(80)
                 .coverAgentBinaryPath("/path/to/binary")
-                .modelPrompter(Mock(ModelPrompter))
+                .modelPrompter(Mock(ModelPrompterImpl))
                 .javaClassPath(Optional.of("/path/to/class"))
                 .javaTestClassPath(Optional.of("/path/to/test/class"))
                 .projectPath("/path/to/project")
@@ -28,23 +28,23 @@ class CoverAgentBuilderSpec extends Specification {
                 .project(project)
 
         when:
-        def coverAgent = builder.build()
+        CoverAgentImpl coverAgentImpl = builder.build()
 
         then:
         1 * project.getLogger() >> logger
-        coverAgent.apiKey == "testApiKey"
-        coverAgent.wanDBApiKey == "testWanDBApiKey"
-        coverAgent.iterations == 5
-        coverAgent.coverage == 80
-        coverAgent.coverAgentBinaryPath == "/path/to/binary"
-        coverAgent.modelPrompter != null
-        coverAgent.javaClassPath.get() == "/path/to/class"
-        coverAgent.javaTestClassPath.get() == "/path/to/test/class"
-        coverAgent.projectPath == "/path/to/project"
-        coverAgent.javaClassDir.get() == "/path/to/class/dir"
-        coverAgent.buildDirectory == "/path/to/build"
-        coverAgent.coverAgentExecutor != null
-        coverAgent.project != null
+        coverAgentImpl.apiKey == "testApiKey"
+        coverAgentImpl.wanDBApiKey == "testWanDBApiKey"
+        coverAgentImpl.iterations == 5
+        coverAgentImpl.coverage == 80
+        coverAgentImpl.coverAgentBinaryPath == "/path/to/binary"
+        coverAgentImpl.modelPrompter != null
+        coverAgentImpl.javaClassPath.get() == "/path/to/class"
+        coverAgentImpl.javaTestClassPath.get() == "/path/to/test/class"
+        coverAgentImpl.projectPath == "/path/to/project"
+        coverAgentImpl.javaClassDir.get() == "/path/to/class/dir"
+        coverAgentImpl.buildDirectory == "/path/to/build"
+        coverAgentImpl.coverAgentExecutor != null
+        coverAgentImpl.project != null
     }
 
 }

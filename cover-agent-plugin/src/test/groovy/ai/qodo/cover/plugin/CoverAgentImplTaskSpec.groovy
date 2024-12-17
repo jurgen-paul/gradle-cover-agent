@@ -5,7 +5,7 @@ import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
-class CoverAgentTaskSpec extends Specification {
+class CoverAgentImplTaskSpec extends Specification {
 
     Project project = ProjectBuilder.builder().build()
     CoverAgentTask task = project.tasks.create('coverAgentTask', CoverAgentTask)
@@ -13,7 +13,7 @@ class CoverAgentTaskSpec extends Specification {
     def "test default properties"() {
         expect:
         !task.apiKey.isPresent()
-        !task.wanDBApiKey.isPresent()
+        !task.model.isPresent()
         !task.iterations.isPresent()
         !task.coverAgentBinaryPath.isPresent()
         !task.coverage.isPresent()
@@ -22,14 +22,14 @@ class CoverAgentTaskSpec extends Specification {
     def "test setting properties"() {
         given:
         task.apiKey.set("test-api-key")
-        task.wanDBApiKey.set("test-wandb-api-key")
+        task.model.set("test-wandb-api-key")
         task.iterations.set(10)
         task.coverAgentBinaryPath.set("/path/to/binary")
         task.coverage.set(80)
 
         expect:
         task.apiKey.get() == "test-api-key"
-        task.wanDBApiKey.get() == "test-wandb-api-key"
+        task.model.get() == "test-wandb-api-key"
         task.iterations.get() == 10
         task.coverAgentBinaryPath.get() == "/path/to/binary"
         task.coverage.get() == 80
@@ -38,14 +38,14 @@ class CoverAgentTaskSpec extends Specification {
     def "test performTask"() {
         given:
         task.apiKey.set("test-api-key")
-        task.wanDBApiKey.set("test-wandb-api-key")
+        task.model.set("test-wandb-api-key")
         task.iterations.set(10)
         task.coverAgentBinaryPath.set("/path/to/binary")
         task.coverage.set(80)
 
         and:
         CoverAgentBuilder builderMock = Mock(CoverAgentBuilder)
-        CoverAgent coverAgentMock = Mock(CoverAgent)
+        CoverAgentImpl coverAgentMock = Mock(CoverAgentImpl)
         OpenAiChatModel.OpenAiChatModelBuilder chatModelBuilderMock = Mock(OpenAiChatModel.OpenAiChatModelBuilder)
 
         when:
@@ -53,7 +53,7 @@ class CoverAgentTaskSpec extends Specification {
         CoverAgentBuilder.builder() >> builderMock
         builderMock.project(_) >> builderMock
         builderMock.apiKey(_) >> builderMock
-        builderMock.wanDBApiKey(_) >> builderMock
+        builderMock.model(_) >> builderMock
         builderMock.iterations(_) >> builderMock
         builderMock.coverAgentBinaryPath(_) >> builderMock
         builderMock.coverage(_) >> builderMock
@@ -66,7 +66,7 @@ class CoverAgentTaskSpec extends Specification {
         then:
         0 * builderMock.project(project)
         0 * builderMock.apiKey("test-api-key")
-        0 * builderMock.wanDBApiKey("test-wandb-api-key")
+        0 * builderMock.model("test-wandb-api-key")
         0 * builderMock.iterations(10)
         0 * builderMock.coverAgentBinaryPath("/path/to/binary")
         0 * builderMock.coverage(80)

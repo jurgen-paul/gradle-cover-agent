@@ -1,0 +1,4 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+JaCoCo Coverage Report,com.davidparry.cover.test,ExampleCode,4,19,0,0,1,5,1,5,1,5
+JaCoCo Coverage Report,com.davidparry.cover.test,Fibonacci,0,41,0,8,0,13,0,6,0,2
+JaCoCo Coverage Report,com.davidparry.cover.test,Calc,0,41,0,8,0,13,0,6,0,2

@@ -1,0 +1,24 @@
+{
+  "testingFramework": "spock",
+  "newTests": [
+      {
+        "testBehavior": "sub method with two identical numbers",
+        "linesCovered": [9, 10],
+        "methodSignatureFromSource": "public static int sub(int num1, int num2)",
+        "lineNumbersOfSource": [9, 11],
+        "newImportsForTestClass": [],
+        "newTestMethod": "def \"sub method with two identical numbers\"() {\n    expect:\n    Calc.sub(5, 5) == 0\n}",
+        "inDepthDescription": "This test verifies the behavior of the sub method when both input numbers are identical. It ensures that the subtraction of two equal numbers results in zero, which is a fundamental property of subtraction."
+      },
+      {
+        "testBehavior": "main method with a single valid argument",
+        "linesCovered": [3, 4, 5],
+        "methodSignatureFromSource": "public static void main(String[] args)",
+        "lineNumbersOfSource": [3, 7],
+        "newImportsForTestClass": [],
+        "newTestMethod": "def \"main method with a single valid argument\"() {\n    when:\n    String[] args = [\"5\"]\n    Calc.main(args)\n\n    then:\n    thrown(ArrayIndexOutOfBoundsException)\n}",
+        "inDepthDescription": "This test checks the behavior of the main method when provided with only one argument. Since the main method expects two arguments, this test ensures that an ArrayIndexOutOfBoundsException is thrown, confirming that the method correctly handles cases where the required number of arguments is not met."
+      }
+    ]
+}
+

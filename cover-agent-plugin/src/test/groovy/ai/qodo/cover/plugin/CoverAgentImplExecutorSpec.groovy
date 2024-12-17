@@ -8,7 +8,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.TempDir
 
-class CoverAgentExecutorSpec extends Specification {
+class CoverAgentImplExecutorSpec extends Specification {
     @TempDir
     File testProjectDir
 
@@ -38,7 +38,7 @@ class CoverAgentExecutorSpec extends Specification {
 
         CoverAgentExecutor executor = new CoverAgentExecutor.Builder()
                 .coverAgentBinaryPath(mockCoverAgentFile.absolutePath)
-                .wanDBApiKey("valid_wandb_api_key")
+                .model("valid_wandb_api_key")
                 .apiKey("valid_api_key")
                 .coverage(1)
                 .iterations(2)
@@ -60,7 +60,7 @@ class CoverAgentExecutorSpec extends Specification {
 
         CoverAgentExecutor executor = new CoverAgentExecutor.Builder()
                 .coverAgentBinaryPath(mockCoverAgentFile.absolutePath)
-                .wanDBApiKey("valid_wandb_api_key")
+                .model("valid_wandb_api_key")
                 .apiKey("valid_api_key")
                 .coverage(1)
                 .iterations(2)
@@ -82,7 +82,7 @@ class CoverAgentExecutorSpec extends Specification {
         ExecSpec spec = Mock(ExecSpec)
         CoverAgentExecutor executor = new CoverAgentExecutor.Builder()
                 .coverAgentBinaryPath(mockCoverAgentFile.absolutePath)
-                .wanDBApiKey(wandbkey)
+                .model(model)
                 .apiKey(apiKey)
                 .coverage(1)
                 .iterations(2)
@@ -94,15 +94,14 @@ class CoverAgentExecutorSpec extends Specification {
         action.execute(spec)
 
         then:
-        wanCall * spec.environment(CoverAgentExecutor.WANDB_API_KEY, wandbkey)
         apiCall * spec.environment(CoverAgentExecutor.OPENAI_API_KEY, apiKey)
         1 * spec.setWorkingDir("projectPath")
 
         where:
-        apiKey       | wandbkey   | wanCall | apiCall
-        "api"        | null       | 0       | 1
-        null         | "wandbkey" | 1       | 0
-        "anotherkey" | ""         | 0       | 1
+        apiKey       | model          | apiCall
+        "api"        | null           | 1
+        null         | "OPENAI_MODEL" | 1
+        "anotherkey" | ""             | 1
 
 
     }

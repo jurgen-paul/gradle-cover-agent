@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "testingFramework": {
+      "type": "string",
+      "enum": ["junit","junit5", "spock", "testng"],
+      "description": "The testing framework used for to run tests and must match all the tests methods that are provided newTests.newTestMethod."
+    },
+    "newTests": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "testBehavior": {
+              "type": "string",
+              "description": "the behavior that this newly test in field newTestMethod is testing."
+            },
+            "linesCovered": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "methodSignatureFromSource": {
+              "type": "string",
+              "description": "the  method signature from the source file that this newly test in field newTestMethod is testing."
+            },
+            "lineNumbersOfSource": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "description":"the lines that the new test in the field is covering"
+            },
+            "newImportsForTestClass": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "if new imports are needed in the test class to allow compilation for the newly added test in the field newTestMethod, if the included Test source already has the import to not include it."
+            },
+            "newTestMethod": {
+              "type": "string",
+              "description": "the actual new test method that you just created which must have assertions used based on the testing framework in field testingFramework, this method must be written based on the testing framework in field testingFramework!"
+            },
+            "inDepthDescription": {
+              "type": "string",
+              "description": "use reasoning and really do a deep description of what the new test method you created that is in field newTestMethod is actually testing"
+            }
+          },
+          "required": [
+            "testBehavior",
+            "linesCovered",
+            "methodSignatureFromSource",
+            "lineNumbersOfSource",
+            "newImportsForTestClass",
+            "newTestMethod",
+            "inDepthDescription"
+          ]
+        }
+      ],
+      "description": "the list of all new tests and describing fields that adhere to the testingFramework"
+    }
+  },
+  "required": [
+    "testingFramework",
+    "newTests"
+  ]
+}

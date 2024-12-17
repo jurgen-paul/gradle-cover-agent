@@ -9,17 +9,16 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class CoverAgentExecutor {
-    public static final String WANDB_API_KEY = "WANDB_API_KEY";
     public static final String OPENAI_API_KEY = "OPENAI_API_KEY";
     private final String coverAgentBinaryPath;
-    private final String wanDBApiKey;
+    private final String model;
     private final String apiKey;
     private final int coverage;
     private final int iterations;
 
     private CoverAgentExecutor(Builder builder) {
         this.coverAgentBinaryPath = builder.coverAgentBinaryPath;
-        this.wanDBApiKey = builder.wanDBApiKey;
+        this.model = builder.model;
         this.apiKey = builder.apiKey;
         this.coverage = builder.coverage;
         this.iterations = builder.iterations;
@@ -44,11 +43,7 @@ public class CoverAgentExecutor {
     private Action<ExecSpec> getExecSpecAction(String sourceFile, String testFile, String jacocoReportPath,
                                                String commandString, String projectPath) {
         return (ExecSpec execSpec) -> {
-            if (wanDBApiKey != null && !wanDBApiKey.isEmpty()) {
-                execSpec.environment(WANDB_API_KEY, wanDBApiKey);
-            } else {
-                execSpec.environment(OPENAI_API_KEY, apiKey);
-            }
+            execSpec.environment(OPENAI_API_KEY, apiKey);
             execSpec.commandLine(coverAgentBinaryPath, "--source-file-path=" + sourceFile, "--test-file-path="
                             + testFile, "--code-coverage-report-path=" + jacocoReportPath, "--test-command="
                             + commandString, "--test-command-dir=" + projectPath, "--coverage-type=jacoco",
@@ -60,7 +55,7 @@ public class CoverAgentExecutor {
 
     public static class Builder {
         private String coverAgentBinaryPath;
-        private String wanDBApiKey;
+        private String model;
         private String apiKey;
         private int coverage;
         private int iterations;
@@ -80,8 +75,8 @@ public class CoverAgentExecutor {
             return this;
         }
 
-        public Builder wanDBApiKey(String wanDBApiKey) {
-            this.wanDBApiKey = wanDBApiKey;
+        public Builder model(String model) {
+            this.model = model;
             return this;
         }
 

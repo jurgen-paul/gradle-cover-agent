@@ -2,27 +2,26 @@ package ai.qodo.cover.plugin
 
 import dev.langchain4j.model.openai.OpenAiChatModel
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.artifacts.dsl.DependencyHandler
-import org.gradle.api.file.Directory
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileCollection
-import org.gradle.api.file.FileTree
-import org.gradle.api.file.ProjectLayout
+import org.gradle.api.file.*
 import org.gradle.api.logging.Logger
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskCollection
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.compile.CompileOptions
 import org.gradle.api.tasks.compile.JavaCompile
-import org. gradle. api. artifacts. ConfigurationContainer
+import org.gradle.process.ExecResult
 import spock.lang.Shared
 import spock.lang.Specification
-import  org.gradle.api.artifacts.Configuration
-import org.gradle.api.provider.Provider
+import static CoverAgentImpl.MAX_TOKENS
 
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O
 
-class CoverAgentSpec extends Specification {
+class CoverAgentImplSpec extends Specification {
 
     @Shared
     CoverAgentBuilder builder = CoverAgentBuilder.builder()
@@ -33,7 +32,7 @@ class CoverAgentSpec extends Specification {
         given:
         Project project = Mock(Project)
         builder.project(project)
-        CoverAgent coverAgent = builder.build()
+        CoverAgentImpl coverAgent = builder.build()
         TaskContainer container = Mock(TaskContainer)
         TaskCollection collection = Mock(TaskCollection)
 
@@ -59,7 +58,7 @@ class CoverAgentSpec extends Specification {
         File realFile = new File('src/test/resources/build.gradle')
 
         when:
-        CoverAgent coverAgent = builder.build()
+        CoverAgentImpl coverAgent = builder.build()
         coverAgent.initDirectories()
 
         then:
@@ -73,7 +72,8 @@ class CoverAgentSpec extends Specification {
         1 * direct.exists() >> false
         1 * direct.mkdirs() >> outcome
 
-        where: outcome << [true, false]
+        where:
+        outcome << [true, false]
 
     }
 
@@ -104,17 +104,24 @@ class CoverAgentSpec extends Specification {
 
         CompileOptions javaCompileOptions = Mock(CompileOptions)
 
+        ConfigurationContainer configurationContainer = Mock(ConfigurationContainer)
+
         when:
-        CoverAgent coverAgent = builder.build()
+        CoverAgentImpl coverAgent = builder.build()
         coverAgent.init()
 
         then:
+        1 * project.getConfigurations() >> configurationContainer
+        1 * configurationContainer.findByName("testImplementation") >> null
+        1 * configurationContainer.findByName("testCompile") >> null
+        1 * logger.lifecycle("No test dependencies configuration found.")
+
         2 * javaTestCompileTask.getOptions() >> javaCompileOptions
         2 * javaCompileOptions.getAllCompilerArgs() >> [""]
 
         1 * aiChatModelBuilder.apiKey(_) >> aiChatModelBuilder
         1 * aiChatModelBuilder.modelName(GPT_4_O) >> aiChatModelBuilder
-        1 * aiChatModelBuilder.maxTokens(500) >> aiChatModelBuilder
+        1 * aiChatModelBuilder.maxTokens(MAX_TOKENS) >> aiChatModelBuilder
         1 * aiChatModelBuilder.build() >> aiChatModel
         1 * project.getLogger() >> logger
         1 * logger.debug("Root Project path {}", _)
@@ -145,11 +152,11 @@ class CoverAgentSpec extends Specification {
         given:
         def project = Mock(Project)
         def logger = Mock(Logger)
-        def modelPrompter = Mock(ModelPrompter)
+        def modelPrompter = Mock(ModelPrompterImpl)
         def coverAgentExecutor = Mock(CoverAgentExecutor)
         def builder = new CoverAgentBuilder()
                 .apiKey("validApiKey")
-                .wanDBApiKey("validWanDBApiKey")
+                .model("validWanDBApiKey")
                 .iterations(10)
                 .coverage(80)
                 .coverAgentBinaryPath("/path/to/binary")
@@ -165,9 +172,10 @@ class CoverAgentSpec extends Specification {
         Dependency dependency = Mock(Dependency)
         Configuration conf = Mock(Configuration)
         Set<File> files = [new File('src/test/resources/build.gradle')]
+        ExecResult execResult = Mock(ExecResult)
 
         when:
-        CoverAgent coverAgent = builder.build()
+        CoverAgentImpl coverAgent = builder.build()
         coverAgent.javaCompileCommand = Optional.of("src/test/resources/mock.sh")
         coverAgent.javaTestCompileCommand = Optional.of("src/test/resources/mock.sh")
         coverAgent.javaTestSourceFiles.add(new File('src/test/resources/CalcTest.java'))
@@ -185,6 +193,79 @@ class CoverAgentSpec extends Specification {
 
         _ * project.getLogger() >> logger
         _ * modelPrompter.chatter(_, _) >> new TestInfoResponse("sourceFilePath")
-        _ * coverAgentExecutor.execute(_, _, _, _, _, _) >> "success"
+        _ * project.exec(_) >> execResult
+        _ * execResult.getExitValue() >> 1
     }
+
+    def "path detectFramework testImplementation present but no testing"() {
+        given:
+        Project project = Mock(Project)
+        CoverAgentBuilder builder = CoverAgentBuilder.builder().project(project)
+        CoverAgentImpl coverAgent = new CoverAgentImpl(builder)
+        ConfigurationContainer configurationContainer = Mock(ConfigurationContainer)
+        Configuration configuration = Mock(Configuration)
+        DependencySet dependencies = Mock(DependencySet)
+        Iterator iterator = Mock(Iterator)
+
+        when:
+        coverAgent.detectFramework()
+
+        then:
+        1 * project.getConfigurations() >> configurationContainer
+        1 * configurationContainer.findByName("testImplementation") >> configuration
+        _ * configuration.getDependencies() >> dependencies
+        _ * dependencies.iterator() >> iterator
+        _ * iterator.hasNext() >> false
+    }
+
+    def "path detectFramework testCompile present but no testing"() {
+        given:
+        Project project = Mock(Project)
+        CoverAgentBuilder builder = CoverAgentBuilder.builder().project(project)
+        CoverAgentImpl coverAgent = new CoverAgentImpl(builder)
+        ConfigurationContainer configurationContainer = Mock(ConfigurationContainer)
+        Configuration configuration = Mock(Configuration)
+        DependencySet dependencies = Mock(DependencySet)
+        Iterator iterator = Mock(Iterator)
+
+        when:
+        coverAgent.detectFramework()
+
+        then:
+        1 * project.getConfigurations() >> configurationContainer
+        1 * configurationContainer.findByName("testCompile") >> configuration
+        _ * configuration.getDependencies() >> dependencies
+        _ * dependencies.iterator() >> iterator
+        _ * iterator.hasNext() >> false
+    }
+
+    def "Configuration giving different dependencies "() {
+        given:
+        TestingFramework framework = new TestingFramework(fr_label, group, version, name)
+        CoverAgentBuilder builder = CoverAgentBuilder.builder().project(Mock(Project))
+        CoverAgentImpl coverAgent = new CoverAgentImpl(builder)
+        Configuration configuration = Mock(Configuration)
+        DependencySet dependencies = new MockDepencySet()
+        Dependency dependency = Mock(Dependency)
+        dependencies.dependencies = [dependency]
+
+        when:
+        coverAgent.detectFrameworkInConfiguration(configuration)
+        coverAgent.testingFrameworks.get(0) == framework
+
+        then:
+        1 * configuration.getDependencies() >> dependencies
+        1 * dependency.getGroup() >> group
+        1 * dependency.getName() >> name
+        1 * dependency.getVersion() >> version
+
+        where:
+        group               | name     | fr_label          | version
+        "org.junit.jupiter" | "Junit5" | "junit"           | "1.2.3"
+        "org.junit.vintage" | "Junit4" | "junit"           | "1.0.+"
+        "testng"            | "testng" | "TestNG"          | "1.2.3"
+        "spock"             | "spock"  | "Spock Framework" | "0.0.2"
+
+    }
+
 }

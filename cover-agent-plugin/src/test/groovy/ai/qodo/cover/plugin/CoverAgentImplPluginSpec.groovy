@@ -1,13 +1,15 @@
 package ai.qodo.cover.plugin
 
-
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.TempDir
 
-class CoverAgentPluginSpec extends Specification {
+class CoverAgentImplPluginSpec extends Specification {
     @TempDir
-    File testProjectDir
+    //@Shared
+    File testProjectDir = new File("/Users/davidparry/Desktop/build_tmp")
     File buildFile
     File src
     File main
@@ -108,21 +110,21 @@ class CoverAgentPluginSpec extends Specification {
      * */
     def "lifecycle test of gradle plugin will not make it complete based on API KEY invalid"() {
         // change up this map if you want to see full lifecycle you need to set your OPENAI_API_KEY
-        //Map map = Map.of("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"))
-        Map map = Map.of("OPENAI_API_KEY", "I_AM_BAD_KEY")
+        Map map = Map.of("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"))
+        //Map map = Map.of("OPENAI_API_KEY", "I_AM_BAD_KEY")
         when:
         map.get("OPENAI_API_KEY")
-//        def result = GradleRunner.create()
-//                .withProjectDir(testProjectDir)
-//                .withArguments('coverAgent')
-//                .withEnvironment(map)
-//                .withPluginClasspath()
-//                .forwardStdOutput(new PrintWriter(System.out))
-//                .forwardStdError(new PrintWriter(System.err))
-//                .build()
-
+        BuildResult result = GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments('coverAgent')
+                .withEnvironment(map)
+                .withPluginClasspath()
+                .forwardStdOutput(new PrintWriter(System.out))
+                .forwardStdError(new PrintWriter(System.err))
+                .build()
         then:
-        noExceptionThrown()
+         result != null
+        //noExceptionThrown()
 
     }
 

@@ -4,7 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory
 import spock.lang.Specification
 
-class CoverAgentExtensionSpec extends Specification {
+class CoverAgentImplExtensionSpec extends Specification {
     void setup() {
     }
     // Initializes ai.qodo.cover.plugin.ConcreteCoverAgentExtension with a valid Project object
@@ -27,7 +27,7 @@ class CoverAgentExtensionSpec extends Specification {
         extension.getCoverage() == intProperty
         extension.getCoverAgentBinaryPath() == stringProperty
         extension.getIterations() == intProperty
-        extension.getWanDBApiKey() == stringProperty
+        extension.getModel() == stringProperty
     }
 
 }
