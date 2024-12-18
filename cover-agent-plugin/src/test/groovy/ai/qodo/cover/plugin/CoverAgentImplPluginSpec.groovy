@@ -5,10 +5,9 @@ import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.TempDir
-
 class CoverAgentImplPluginSpec extends Specification {
-    @TempDir
-    //@Shared
+    //@TempDir
+    @Shared
     File testProjectDir = new File("/Users/davidparry/Desktop/build_tmp")
     File buildFile
     File src
@@ -21,7 +20,22 @@ class CoverAgentImplPluginSpec extends Specification {
     File testCalcJavaFile
     File mockCoverAgentFile
 
+
+
     def setup() {
+
+        if(!testProjectDir.exists()) {
+            testProjectDir.mkdirs()
+        } else {
+            testProjectDir.eachFile { file ->
+                if (file.isDirectory()) {
+                    file.deleteDir()
+                } else {
+                    file.delete()
+                }
+            }
+        }
+
         buildFile = new File(testProjectDir, 'build.gradle')
         File resourceBuildFile = new File('src/test/resources/build.gradle')
         if (resourceBuildFile.exists()) {
@@ -116,7 +130,7 @@ class CoverAgentImplPluginSpec extends Specification {
         map.get("OPENAI_API_KEY")
         BuildResult result = GradleRunner.create()
                 .withProjectDir(testProjectDir)
-                .withArguments('coverAgent')
+                .withArguments('coverAgent', '--info')
                 .withEnvironment(map)
                 .withPluginClasspath()
                 .forwardStdOutput(new PrintWriter(System.out))

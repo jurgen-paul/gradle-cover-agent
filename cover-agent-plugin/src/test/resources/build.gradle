@@ -1,7 +1,7 @@
 
 plugins {
     id 'java'
-    id 'ai.qodo.plugin.cover-agent' version '0.0.1'
+    id 'ai.qodo.plugin.cover-agent' version '0.0.2'
     id 'jacoco'
 }
 

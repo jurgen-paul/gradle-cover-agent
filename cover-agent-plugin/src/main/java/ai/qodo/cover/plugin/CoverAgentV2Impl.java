@@ -62,6 +62,7 @@ public class CoverAgentV2Impl implements CoverAgent {
     this.logger = project.getLogger();
     this.openAiChatModelBuilder = builder.openAiChatModelBuilder();
     this.task = builder.task();
+    logger.info("Version 2 being used {}", this);
   }
 
   public void init() {
@@ -125,9 +126,15 @@ public class CoverAgentV2Impl implements CoverAgent {
   }
 
   public void invoke() {
-    logger.lifecycle("Start of Invoking");
+    logger.info("Start of Invoking");
+    if(logger.isInfoEnabled()) {
+      throw new RuntimeException("I have been invoked");
+    }
+    TaskContainer tasks = project.getTasks();
+    final JacocoReport originalJacocoReportTask = (JacocoReport) tasks.findByName("jacocoTestReport");
 
-
+    logger.info("DAVID Jacoco Report {}", originalJacocoReportTask);
+    logger.lifecycle("Task containers " +originalJacocoReportTask);
     logger.lifecycle("End of Invoking");
   }
 

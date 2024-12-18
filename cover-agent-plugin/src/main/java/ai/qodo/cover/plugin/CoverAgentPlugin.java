@@ -27,7 +27,7 @@ public class CoverAgentPlugin implements Plugin<Project> {
   @Override
   public void apply(Project project) {
     Logger log = project.getLogger();
-    log.info("Running plugin version {}", "0.0.1");
+    log.info("Running plugin version {}", "0.0.2");
 
     // Create the extension to hold configuration properties
     CoverAgentExtension extension = project.getExtensions().create("coverAgent", CoverAgentExtension.class, project);
@@ -48,11 +48,7 @@ public class CoverAgentPlugin implements Plugin<Project> {
       task.getOutputs().upToDateWhen(t -> false);
     });
 
-    // After the project is evaluated, configure repeated tasks
-    project.afterEvaluate(proj -> {
-      Integer iterations = extension.getIterations().getOrElse(DEFAULT_ITERATIONS);
-      configureRepeats(project, iterations);
-    });
+
   }
 
   // Method to configure repeated tasks based on iterations
