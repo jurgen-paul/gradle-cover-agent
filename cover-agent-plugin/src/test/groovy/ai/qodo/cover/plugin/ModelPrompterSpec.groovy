@@ -12,7 +12,7 @@ class ModelPrompterSpec extends Specification {
         given:
         Logger logger = Mock(Logger)
         ChatLanguageModel model = Mock(ChatLanguageModel)
-        ModelPrompter prompter = new ModelPrompter(logger, model)
+        ModelPrompter prompter = new ModelPrompter(logger, model, new ModelUtility(logger))
         List<File> sourceFiles = [new File("src/test/java/TestFile1.java")]
         File testFile = new File('src/test/resources/Calc.java')
         Response<AiMessage> rsp = Mock( Response<AiMessage>)
@@ -23,7 +23,7 @@ class ModelPrompterSpec extends Specification {
         then:
         1 * model.generate(_,_) >> rsp
         _ * rsp.content() >> message
-        _ * message.text() >> 'json     {\"filepath\": \"path_here\"} '
+        _ * message.text() >> "```json     {\"filepath\": \"path_here\",\"element\": {}  } ``` "
         response.filepath() == "path_here"
     }
 

@@ -1,13 +1,15 @@
 package ai.qodo.cover.plugin
 
-
 import org.gradle.testkit.runner.GradleRunner
+import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.TempDir
 
 class CoverAgentPluginSpec extends Specification {
-    @TempDir
-    File testProjectDir
+    //@TempDir
+    //File testProjectDir
+    @Shared
+    File testProjectDir = new File("/Users/davidparry/Desktop/build_tmp")
+
     File buildFile
     File src
     File main
@@ -20,6 +22,17 @@ class CoverAgentPluginSpec extends Specification {
     File mockCoverAgentFile
 
     def setup() {
+        if (!testProjectDir.exists()) {
+            testProjectDir.mkdirs()
+        } else {
+            testProjectDir.eachFile { file ->
+                if (file.isDirectory()) {
+                    file.deleteDir()
+                } else {
+                    file.delete()
+                }
+            }
+        }
         buildFile = new File(testProjectDir, 'build.gradle')
         File resourceBuildFile = new File('src/test/resources/build.gradle')
         if (resourceBuildFile.exists()) {
@@ -47,59 +60,29 @@ class CoverAgentPluginSpec extends Specification {
         File testPackage = new File(thava, packagePath)
         testPackage.mkdirs()
 
-        mainJavaFile = new File(sourcePackage, 'Main.java')
-        mainJavaFile.createNewFile()
-
-        File calcFile = new File(sourcePackage, 'Calc.java')
-        calcFile.createNewFile()
-
-        testJavaFile = new File(testPackage, 'MainTest.java')
-        testJavaFile.createNewFile()
-
-        testCalcJavaFile = new File(testPackage, 'CalcTest.java')
-        testCalcJavaFile.createNewFile()
-
-
-        File mainJavaResource = new File('src/test/resources/Main.java')
-        if (mainJavaResource.exists()) {
-            mainJavaFile << mainJavaResource.text
-        } else {
-            println("Resource file not found: ${mainJavaResource.absolutePath}")
-        }
-        File calcJavaResource = new File('src/test/resources/Calc.java')
-        if (calcJavaResource.exists()) {
-            calcFile << calcJavaResource.text
-        } else {
-            println("Resource file not found: ${calcJavaResource.absolutePath}")
-        }
-
-
-        File testJavaResource = new File('src/test/resources/MainTest.java')
-        if (testJavaResource.exists()) {
-            testJavaFile << testJavaResource.text
-        } else {
-            println("Resource file not found: ${testJavaResource.absolutePath}")
-        }
-
-        File testCalcJavaResource = new File('src/test/resources/CalcTest.java')
-        if (testCalcJavaResource.exists()) {
-            testCalcJavaFile << testCalcJavaResource.text
-        } else {
-            println("Resource file not found: ${testCalcJavaResource.absolutePath}")
-        }
+        copyTo('src/test/resources/Main.java', new File(sourcePackage, 'Main.java'))
+        copyTo('src/test/resources/Calc.java', new File(sourcePackage, 'Calc.java'))
+        copyTo('src/test/resources/MainTest.java', new File(testPackage, 'MainTest.java'))
+        copyTo('src/test/resources/CalcTest.java', new File(testPackage, 'CalcTest.java'))
+        copyTo('src/test/resources/Utility.java', new File(sourcePackage, 'Utility.java'))
 
         mockCoverAgentFile = new File(testProjectDir, 'mock.sh')
-        mockCoverAgentFile.createNewFile()
+
+        copyTo('src/test/resources/mock.sh', mockCoverAgentFile)
         mockCoverAgentFile.setExecutable(true)
 
-        File mockCoverAgentResource = new File('src/test/resources/mock.sh')
-        if (mockCoverAgentResource.exists()) {
-            mockCoverAgentFile << mockCoverAgentResource.text
-        } else {
-            println("Resource file not found: ${mockCoverAgentResource.absolutePath}")
-        }
-        println("Testing file path ${testJavaFile.absoluteFile.absolutePath}")
     }
+
+    void copyTo(String resourceFilePath, File file) {
+        file.createNewFile()
+        File resourceFile = new File(resourceFilePath)
+        if (resourceFile.exists()) {
+            file << resourceFile.text
+        } else {
+            println("Resource file not found: ${resourceFile.absolutePath}")
+        }
+    }
+
 
     /**
      * If you set environment key OPENAI_API_KEY to a proper key and run this with a valid key the test
@@ -108,18 +91,18 @@ class CoverAgentPluginSpec extends Specification {
      * */
     def "lifecycle test of gradle plugin will not make it complete based on API KEY invalid"() {
         // change up this map if you want to see full lifecycle you need to set your OPENAI_API_KEY
-        //Map map = Map.of("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"))
-        Map map = Map.of("OPENAI_API_KEY", "I_AM_BAD_KEY")
+        Map map = Map.of("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"))
+        //Map map = Map.of("OPENAI_API_KEY", "I_AM_BAD_KEY")
         when:
         map.get("OPENAI_API_KEY")
-//        def result = GradleRunner.create()
-//                .withProjectDir(testProjectDir)
-//                .withArguments('coverAgent')
-//                .withEnvironment(map)
-//                .withPluginClasspath()
-//                .forwardStdOutput(new PrintWriter(System.out))
-//                .forwardStdError(new PrintWriter(System.err))
-//                .build()
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments('coverAgent', '--info')
+                .withEnvironment(map)
+                .withPluginClasspath()
+                .forwardStdOutput(new PrintWriter(System.out))
+                .forwardStdError(new PrintWriter(System.err))
+                .build()
 
         then:
         noExceptionThrown()
