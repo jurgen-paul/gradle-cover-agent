@@ -1,14 +1,19 @@
 package ai.qodo.cover.plugin
 
 import dev.langchain4j.model.openai.OpenAiChatModel
+import org.gradle.api.Describable
+import org.gradle.api.DomainObjectSet
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.file.ProjectLayout
+import org.gradle.api.internal.artifacts.DefaultDependencySet
+import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal
 import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.TaskCollection
 import org.gradle.api.tasks.TaskContainer
@@ -19,6 +24,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 import  org.gradle.api.artifacts.Configuration
 import org.gradle.api.provider.Provider
+
+import java.util.stream.Stream
 
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O
 
@@ -104,40 +111,47 @@ class CoverAgentSpec extends Specification {
 
         CompileOptions javaCompileOptions = Mock(CompileOptions)
 
+        ConfigurationContainer configurationContainer = Mock(ConfigurationContainer)
+        Configuration testConfiguration = Mock(Configuration)
+        DependencySet testDependencySet  =  Mock(DependencySet)
+
+
         when:
         CoverAgent coverAgent = builder.build()
         coverAgent.init()
 
         then:
-        2 * javaTestCompileTask.getOptions() >> javaCompileOptions
-        2 * javaCompileOptions.getAllCompilerArgs() >> [""]
+        1 * project.getConfigurations() >> configurationContainer
+        1 * configurationContainer.getByName("testImplementation") >> testConfiguration
+        1 * testConfiguration.getDependencies() >> testDependencySet
+        //_ * testDependencySet.isEmpty() >> true
 
-        1 * aiChatModelBuilder.apiKey(_) >> aiChatModelBuilder
-        1 * aiChatModelBuilder.modelName(GPT_4_O) >> aiChatModelBuilder
-        1 * aiChatModelBuilder.maxTokens(500) >> aiChatModelBuilder
-        1 * aiChatModelBuilder.build() >> aiChatModel
-        1 * project.getLogger() >> logger
-        1 * logger.debug("Root Project path {}", _)
-        1 * logger.debug("Build directory already exists: {}", _)
-
-        4 * project.getTasks() >> container
-        4 * container.withType(JavaCompile.class) >> collection
-        4 * collection.findByName(_) >> javaTestCompileTask
-        5 * javaTestCompileTask.getDestinationDirectory() >> directoryProperty
-        5 * directoryProperty.get() >> directory
-        5 * directory.getAsFile() >> file
-        5 * file.getAbsolutePath() >> "/apth"
-        2 * javaTestCompileTask.getClasspath() >> fileCollection
-        2 * fileCollection.getFiles() >> fileSet
-        4 * javaTestCompileTask.getSource() >> fileTree
-        4 * fileTree.getFiles() >> fileSet
-
-        2 * project.getLayout() >> projectLayout
-        1 * projectLayout.getProjectDirectory() >> projectDirectory
-        1 * projectDirectory.getAsFile() >> realFile
-        1 * projectLayout.getBuildDirectory() >> directoryProperty
-        1 * directoryProperty.getAsFile() >> buildDirectoryProvider
-        1 * buildDirectoryProvider.get() >> realFile
+        _ * javaTestCompileTask.getOptions() >> javaCompileOptions
+        _ * javaCompileOptions.getAllCompilerArgs() >> [""]
+        _ * aiChatModelBuilder.apiKey(_) >> aiChatModelBuilder
+        _ * aiChatModelBuilder.modelName(GPT_4_O) >> aiChatModelBuilder
+        _ * aiChatModelBuilder.maxTokens(500) >> aiChatModelBuilder
+        _ * aiChatModelBuilder.build() >> aiChatModel
+        _ * project.getLogger() >> logger
+        _ * logger.debug("Root Project path {}", _)
+        _ * logger.debug("Build directory already exists: {}", _)
+        _ * project.getTasks() >> container
+        _ * container.withType(JavaCompile.class) >> collection
+        _ * collection.findByName(_) >> javaTestCompileTask
+        _ * javaTestCompileTask.getDestinationDirectory() >> directoryProperty
+        _ * directoryProperty.get() >> directory
+        _ * directory.getAsFile() >> file
+        _ * file.getAbsolutePath() >> "/apth"
+        _ * javaTestCompileTask.getClasspath() >> fileCollection
+        _ * fileCollection.getFiles() >> fileSet
+        _ * javaTestCompileTask.getSource() >> fileTree
+        _ * fileTree.getFiles() >> fileSet
+        _ * project.getLayout() >> projectLayout
+        _ * projectLayout.getProjectDirectory() >> projectDirectory
+        _ * projectDirectory.getAsFile() >> realFile
+        _ * projectLayout.getBuildDirectory() >> directoryProperty
+        _ * directoryProperty.getAsFile() >> buildDirectoryProvider
+        _ * buildDirectoryProvider.get() >> realFile
     }
 
     // Successful execution of the invoke method with valid project setup

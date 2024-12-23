@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 import org.gradle.api.logging.Logger;
 
 public class ModelUtility {
-  Logger logger;
+  private Logger logger;
 
   public ModelUtility(Logger logger) {
     this.logger = logger;

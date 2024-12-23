@@ -44,6 +44,7 @@ public class CoverAgent {
   private final Project project;
   private final Logger logger;
   private final OpenAiChatModel.OpenAiChatModelBuilder openAiChatModelBuilder;
+  private final Map<File, String> testToSourceFileMatches = new HashMap<>();
   private ModelPrompter modelPrompter;
   private Optional<String> javaClassPath = Optional.empty();
   private Optional<String> javaTestClassPath = Optional.empty();
@@ -53,7 +54,6 @@ public class CoverAgent {
   private CoverAgentExecutor coverAgentExecutor;
   private Optional<String> javaCompileCommand = Optional.empty();
   private Optional<String> javaTestCompileCommand = Optional.empty();
-  private final Map<File, String> testToSourceFileMatches = new HashMap<>();
 
   public CoverAgent(CoverAgentBuilder builder) {
     this.apiKey = builder.getApiKey();
@@ -259,46 +259,26 @@ public class CoverAgent {
   }
 
   private String detectTestFramework(Project project) {
-    Configuration testConfiguration = project.getConfigurations().getByName("testImplementation");
-    DependencySet dependencies = testConfiguration.getDependencies();
+    try {
+      ConfigurationContainer container = project.getConfigurations();
+      Configuration testConfiguration = container.getByName("testImplementation");
+      DependencySet dependencies = testConfiguration.getDependencies();
 
-    // First priority: Check for Spock Framework
-    if (dependencies.stream().anyMatch(d -> d.getGroup().contains("spockframework"))) {
-      logger.debug("Detected Spock Framework for testing");
-      return "spockframework";
-    }
 
-    // Second priority: Check for JUnit 5 specifically
-    boolean hasJunit5 = dependencies.stream().anyMatch(d -> d.getGroup().equals("org.junit.jupiter"));
-    if (hasJunit5) {
-      logger.debug("Detected JUnit 5 for testing");
+      List<FrameworkCheck> frameworkChecks =
+          List.of(new FrameworkCheck("spockframework"), new FrameworkCheck("testng"), new FrameworkCheck("junit5"),
+              new FrameworkCheck("junit4", true), new FrameworkCheck("junit3", true));
+
+      Optional<String> detectedFramework =
+          frameworkChecks.stream().filter(check -> dependencies.stream().anyMatch(d -> check.matches(d)))
+              .map(FrameworkCheck::getFramework).findFirst();
+
+      detectedFramework.ifPresent(framework -> logger.debug(framework));
+      return detectedFramework.orElse("junit5");
+    } catch (Exception e) {
+      logger.error("Failure in determining testing framework returning Junit5");
       return "junit5";
     }
-
-    // Third priority: Check for JUnit 4
-    boolean hasJunit4 = dependencies.stream().anyMatch(d -> d.getVersion() != null && d.getVersion().startsWith("4."));
-    if (hasJunit4) {
-      logger.debug("Detected JUnit 4 for testing");
-      return "junit4";
-    }
-
-    // Fourth priority: Check for JUnit 3
-    boolean hasJunit3 = dependencies.stream().anyMatch(d -> d.getVersion() != null && d.getVersion().startsWith("3."));
-    if (hasJunit3) {
-      logger.debug("Detected JUnit 3 for testing");
-      return "junit3";
-    }
-
-    // Default to JUnit 5 if any junit dependency is found but version is unclear
-    if (dependencies.stream().anyMatch(d -> d.getGroup().contains("junit"))) {
-      logger.debug("Found junit dependency, defaulting to JUnit 5");
-      return "junit5";
-    }
-
-    logger.error(
-        "No specific test framework detected, you will not be able to run tests, add a testing framework to your project before proceeding");
-    throw new RuntimeException(
-        "No specific test framework detected, you will not be able to run tests, add a testing framework to your project before proceeding");
   }
 
   public void invoke() {

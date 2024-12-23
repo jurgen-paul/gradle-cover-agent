@@ -31,7 +31,7 @@ class ModelPrompterSpec extends Specification {
         given:
         Logger logger = Mock(Logger)
         ChatLanguageModel model = Mock(ChatLanguageModel)
-        ModelPrompter prompter = new ModelPrompter(logger, model)
+        ModelPrompter prompter = new ModelPrompter(logger, model, Mock(ModelUtility))
         List<File> sourceFiles = [new File("src/test/java/TestFile1.java")]
         File testFile = new File("src/test/java/TestFile.java")
 
@@ -40,15 +40,6 @@ class ModelPrompterSpec extends Specification {
 
         then:
         thrown(CoverError)
-    }
-
-    def"extract empty no value from model empty object" () {
-        given:
-        Logger logger = Mock(Logger)
-        ChatLanguageModel model = Mock(ChatLanguageModel)
-        ModelPrompter prompter = new ModelPrompter(logger, model)
-
-        expect: prompter.extractJson(null) == "{}"
     }
 
 }

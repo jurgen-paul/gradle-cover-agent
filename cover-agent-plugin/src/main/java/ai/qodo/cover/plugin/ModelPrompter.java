@@ -32,16 +32,28 @@ public class ModelPrompter {
        "}},"required":["filepath"],"additionalProperties":false}
       """;
   private static final Gson GSON = new Gson();
+  private static final String TEST_FILE_SYSTEM_PROMPT = """
+      ### You are a Expert Software Developer in writing Unit Tests.
+      #### The userPrompt input will be provided in JSON format following this valid json schema:
+        ```json {"$schema":"http://json-schema.org/draft-07/schema#","type":"object","title":"TestFileRequest",
+        "description":"Schema for test file request data","properties":{"sourceFilePath":{"type":"string",
+        "description":"Path to the source file use this to come up with the path for the test file,
+         taking into account it will not be the exact path rather instead of the source directory will be a
+          test directory"},
+        "sourceContent":{"type":"string","description":"Content of the source file"},"testingFramework":
+        {"type":"string","description":"Name of the testing framework that you will use to create the contents
+        of the Test file making sure it will compile with no test in the file"}},"required":["sourceFilePath",
+        "sourceContent","testingFramework"],"additionalProperties":false}```
+      #### Your response must return in the form of this mandatory json schema:
+        ```json {"$schema":"http://json-schema.org/draft-07/schema#","type":"object","title":"TestFileResponse",
+        "description":"Schema for TestFileResponse record class","properties":{"path":{"type":"string","description"
+        :"The path of the test file"},"fileName":{"type":"string","description":"The name of the test file"},"contents"
+        :{"type":"string","description":"The contents of the test file"}},"required":["path","fileName","contents"],
+        "additionalProperties":false} ```
+      """;
   private final Logger logger;
   private final ChatLanguageModel model;
   private final ModelUtility utility;
-  private final String TEST_FILE_SYSTEM_PROMPT = """
-      ### You are a Expert Software Developer in writing Unit Tests.
-      #### The userPrompt input will be provided in JSON format following this valid json schema:
-        ```json {"$schema":"http://json-schema.org/draft-07/schema#","type":"object","title":"TestFileRequest","description":"Schema for test file request data","properties":{"sourceFilePath":{"type":"string","description":"Path to the source file use this to come up with the path for the test file taking into account it will not be the exact path rather instead of the source directory will be a test directory"},"sourceContent":{"type":"string","description":"Content of the source file"},"testingFramework":{"type":"string","description":"Name of the testing framework that you will use to create the contents of the Test file making sure it will compile with no test in the file"}},"required":["sourceFilePath","sourceContent","testingFramework"],"additionalProperties":false}```
-      #### Your response must return in the form of this mandatory json schema:
-        ```json {"$schema":"http://json-schema.org/draft-07/schema#","type":"object","title":"TestFileResponse","description":"Schema for TestFileResponse record class","properties":{"path":{"type":"string","description":"The path of the test file"},"fileName":{"type":"string","description":"The name of the test file"},"contents":{"type":"string","description":"The contents of the test file"}},"required":["path","fileName","contents"],"additionalProperties":false} ```
-      """;
 
   public ModelPrompter(Logger logger, ChatLanguageModel model, ModelUtility util) {
     this.logger = logger;
