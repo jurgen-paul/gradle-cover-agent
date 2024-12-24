@@ -16,13 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
-import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.DependencySet;
-import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.logging.Logger;
@@ -54,7 +51,7 @@ public class CoverAgent {
   private CoverAgentExecutor coverAgentExecutor;
   private Optional<String> javaCompileCommand = Optional.empty();
   private Optional<String> javaTestCompileCommand = Optional.empty();
-
+  private DependencyHelper dependencyHelper;
   public CoverAgent(CoverAgentBuilder builder) {
     this.apiKey = builder.getApiKey();
     this.wanDBApiKey = builder.getWanDBApiKey();
@@ -71,6 +68,7 @@ public class CoverAgent {
     this.project = builder.getProject();
     this.logger = project.getLogger();
     this.openAiChatModelBuilder = builder.openAiChatModelBuilder();
+    this.dependencyHelper = new DependencyHelper(this.project, this.logger);
   }
 
   public void init() {
@@ -100,9 +98,6 @@ public class CoverAgent {
     //Map<File, String> completeMapping = result.testToSourceMap();
     for (File sourceFile : result.remainingSourceFiles()) {
       processTestFileGeneration(sourceFile, framework, testToSourceFileMatches);
-    }
-    for (File file : testToSourceFileMatches.keySet()) {
-      logger.info("DAVID FILE {}", file.getAbsolutePath());
     }
     return !result.remainingSourceFiles().isEmpty();
   }
@@ -179,8 +174,6 @@ public class CoverAgent {
       if (Files.exists(path)) {
         Files.delete(path);
         logger.info("Deleted file: {}", filePath);
-      } else {
-        logger.debug("File does not exist: {}", filePath);
       }
     } catch (IOException e) {
       logger.error("Failed to delete file: {}", filePath, e);
@@ -191,27 +184,8 @@ public class CoverAgent {
     return String.join(PATH_SEPARATOR, list);
   }
 
-  private List<String> findNeededJars(String mavenDependencyPath) throws CoverError {
-    List<String> jarPaths = new ArrayList<>();
-    try {
-      ConfigurationContainer c = project.getConfigurations();
-      DependencyHandler handler = project.getDependencies();
-      Dependency dependency = handler.create(mavenDependencyPath);
-      Configuration configuration = c.detachedConfiguration(dependency);
-      Set<File> files = configuration.resolve();
-      jarPaths.addAll(files.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
-      for (String jarPath : jarPaths) {
-        logger.debug("Found jar path {}", jarPath);
-      }
-    } catch (Exception e) {
-      logger.error("Failed to find needed jars {}", mavenDependencyPath, e);
-      throw new CoverError("Failed to find " + mavenDependencyPath, e);
-    }
-    return jarPaths;
-  }
-
   private String jacocoJavaReport(String reportPath, String execPath) throws CoverError {
-    List<String> jars = findNeededJars("org.jacoco:org.jacoco.cli:0.8.12");
+    List<String> jars = dependencyHelper.findNeededJars("org.jacoco:org.jacoco.cli:0.8.12");
     String jarPath = convertListToString(jars);
     String sourcePath = convertListToString(javaSourceDir);
     String classFiles = "";
@@ -223,8 +197,9 @@ public class CoverAgent {
   }
 
   private String javaAgentCommand(String jacocExecPath) throws CoverError {
-    String standAloneJunit = findNeededJars("org.junit.platform:junit-platform-console-standalone:1.11.0").get(0);
-    String jacocoAgent = findNeededJars("org.jacoco:org.jacoco.agent:0.8.11:runtime").get(0);
+    String standAloneJunit = dependencyHelper
+        .findNeededJars("org.junit.platform:junit-platform-console-standalone:1.11.0").get(0);
+    String jacocoAgent = dependencyHelper.findNeededJars("org.jacoco:org.jacoco.agent:0.8.11:runtime").get(0);
     String builder = "";
     if (javaTestClassPath.isPresent()) {
       builder = "java -javaagent:" + jacocoAgent + "=destfile=" + jacocExecPath + " -cp " + standAloneJunit + ":"
@@ -267,7 +242,7 @@ public class CoverAgent {
 
       List<FrameworkCheck> frameworkChecks =
           List.of(new FrameworkCheck("spockframework"), new FrameworkCheck("testng"), new FrameworkCheck("junit5"),
-              new FrameworkCheck("junit4", true), new FrameworkCheck("junit3", true));
+              new FrameworkCheck("junit4", "4."), new FrameworkCheck("junit3", "3."));
 
       Optional<String> detectedFramework =
           frameworkChecks.stream().filter(check -> dependencies.stream().anyMatch(d -> check.matches(d)))

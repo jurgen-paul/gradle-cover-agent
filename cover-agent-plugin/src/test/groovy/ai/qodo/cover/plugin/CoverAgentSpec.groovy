@@ -1,31 +1,25 @@
 package ai.qodo.cover.plugin
 
 import dev.langchain4j.model.openai.OpenAiChatModel
-import org.gradle.api.Describable
-import org.gradle.api.DomainObjectSet
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.artifacts.dsl.DependencyHandler
-import org.gradle.api.file.Directory
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.FileCollection
-import org.gradle.api.file.FileTree
-import org.gradle.api.file.ProjectLayout
-import org.gradle.api.internal.artifacts.DefaultDependencySet
-import org.gradle.api.internal.artifacts.configurations.ConfigurationInternal
+import org.gradle.api.file.*
 import org.gradle.api.logging.Logger
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskCollection
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.compile.CompileOptions
 import org.gradle.api.tasks.compile.JavaCompile
-import org. gradle. api. artifacts. ConfigurationContainer
 import spock.lang.Shared
 import spock.lang.Specification
-import  org.gradle.api.artifacts.Configuration
-import org.gradle.api.provider.Provider
+import spock.lang.TempDir
 
-import java.util.stream.Stream
+import java.nio.file.Files
+import java.nio.file.Paths
 
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O
 
@@ -80,7 +74,8 @@ class CoverAgentSpec extends Specification {
         1 * direct.exists() >> false
         1 * direct.mkdirs() >> outcome
 
-        where: outcome << [true, false]
+        where:
+        outcome << [true, false]
 
     }
 
@@ -113,7 +108,7 @@ class CoverAgentSpec extends Specification {
 
         ConfigurationContainer configurationContainer = Mock(ConfigurationContainer)
         Configuration testConfiguration = Mock(Configuration)
-        DependencySet testDependencySet  =  Mock(DependencySet)
+        DependencySet testDependencySet = Mock(DependencySet)
 
 
         when:
@@ -200,5 +195,88 @@ class CoverAgentSpec extends Specification {
         _ * project.getLogger() >> logger
         _ * modelPrompter.chatter(_, _) >> new TestInfoResponse("sourceFilePath")
         _ * coverAgentExecutor.execute(_, _, _, _, _, _) >> "success"
+    }
+
+    def "should delete file if it exists and log info"() {
+        given:
+        def project = Mock(Project)
+        def logger = Mock(Logger)
+
+        // Set up the project to return the mocked logger
+        project.getLogger() >> logger
+
+        // Use the real builder to set the project
+        builder.project(project)
+        CoverAgent fileDeletion = builder.build() // Assuming build() creates a CoverAgent instance
+        def filePath = "existingFile.txt"
+        def path = Paths.get(filePath)
+        Files.createFile(path) // Create a file to ensure it exists
+
+        when:
+        fileDeletion.deleteFileIfExists(filePath)
+
+        then:
+        _ * Files.delete(path)
+        1 * logger.info("Deleted file: {}", filePath)
+
+        cleanup:
+        Files.deleteIfExists(path) // Clean up the file if it still exists
+    }
+
+    @TempDir
+    File tempDir
+
+    def "should create test file with content in new directory"() {
+        given:
+        TestFileResponse response = new TestFileResponse(tempDir.absolutePath + "/newdir",
+                "test.txt",
+                "test content")
+        def project = Mock(Project)
+        def logger = Mock(Logger)
+
+        // Set up the project to return the mocked logger
+        project.getLogger() >> logger
+
+        // Use the real builder to set the project
+        builder.project(project)
+        CoverAgent createTestFileAgent = builder.build()
+
+        when:
+        def result = createTestFileAgent.createTestFile(response)
+
+        then:
+        result.exists()
+        result.parentFile.exists()
+        result.text == "test content"
+        result.name == "test.txt"
+    }
+
+    def "test the javaAgentCommand creation  "() {
+        given:
+        def project = Mock(Project)
+        def logger = Mock(Logger)
+
+        // Set up the project to return the mocked logger
+        project.getLogger() >> logger
+
+        // Use the real builder to set the project
+        builder.project(project)
+        CoverAgent coverAgentExec = builder.build()
+        ConfigurationContainer c = Mock(ConfigurationContainer)
+        DependencyHandler handler = Mock(DependencyHandler)
+        Configuration configuration = Mock(Configuration)
+        File file = new File(tempDir.absolutePath+ "/temp.jar")
+        Set<File> files = Set.of(file)
+
+        when:
+        def result = coverAgentExec.javaAgentCommand("executePath")
+
+        then:
+        _ * project.getConfigurations() >> c
+        _ * project.getDependencies() >> handler
+        _ * c.detachedConfiguration(_) >> configuration
+        _ * configuration.resolve() >> files
+        result != null
+
     }
 }
