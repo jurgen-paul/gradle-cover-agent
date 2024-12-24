@@ -92,8 +92,8 @@ class CoverAgentPluginSpec extends Specification {
      * */
     def "lifecycle test of gradle plugin will not make it complete based on API KEY invalid"() {
         // change up this map if you want to see full lifecycle you need to set your OPENAI_API_KEY
-        Map map = Map.of("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"))
-        //Map map = Map.of("OPENAI_API_KEY", "I_AM_BAD_KEY")
+        //Map map = Map.of("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"))
+        Map map = Map.of("OPENAI_API_KEY", "I_AM_BAD_KEY")
         when:
         map.get("OPENAI_API_KEY")
 //        def result = GradleRunner.create()
