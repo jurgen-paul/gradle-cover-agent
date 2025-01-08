@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'jacoco'
     id 'groovy'
-    id 'ai.qodo.plugin.cover-agent' version '0.0.2'
+    id 'ai.qodo.plugin.cover-agent' version '0.0.3'
 }
 
 repositories {
@@ -15,10 +15,12 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 coverAgent {
-    apiKey = System.getenv("OPENAI_API_KEY")
+    //apiKey = System.getenv("OPENAI_API_KEY")
     coverAgentBinaryPath = System.getenv("COVER_AGENT")
     coverage = 25
     iterations = 3
+    modelBaseUrl = "http://localhost:11434"
+    model = "llama2"
 }
 
 jacocoTestReport {
