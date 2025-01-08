@@ -12,7 +12,7 @@ class <className>Spec extends Specification {
 
 >>
 junit5(package, className) ::= <<
-<if(package)>package <package>
+<if(package)>package <package>;
 <endif>
 
 import org.junit.jupiter.api.*;
@@ -29,7 +29,7 @@ public class <className>Test {
 
 >>
 junit4(package, className) ::= <<
-<if(package)>package <package>
+<if(package)>package <package>;
 <endif>
 
 import org.junit.Test;
@@ -45,7 +45,7 @@ public class <className>Test {
 
 >>
 junit3(package, className) ::= <<
-<if(package)>package <package>
+<if(package)>package <package>;
 <endif>
 
 import junit.framework.TestCase;
@@ -60,7 +60,7 @@ public class <className>Test extends TestCase {
 
 >>
 testng(package, className) ::= <<
-<if(package)>package <package>
+<if(package)>package <package>;
 <endif>
 
 import org.testng.annotations.Test;

@@ -30,7 +30,7 @@ public class CoverAgentPlugin implements Plugin<Project> {
     project.getExtensions().create("coverAgent", CoverAgentExtension.class, project);
 
     project.afterEvaluate(p -> {
-      logger.info("Need to wait to the entire file is evaluated");
+      logger.debug("Project evaluation in progress - deferring CoverAgent task registration until completion");
       Optional<Map<String, File>> testFileDirectory = findTestDirectory(project, logger);
 
       CoverAgentExtension extension = p.getExtensions().findByType(CoverAgentExtension.class);
@@ -53,7 +53,7 @@ public class CoverAgentPlugin implements Plugin<Project> {
         FileCollection testFiles = sourceSet.getAllJava().getSourceDirectories();
         Set<File> testSourceBase = testFiles.getFiles();
         testDirectories = Optional.of(
-            testSourceBase.stream().peek(f -> logger.info("Processing path: {}", f.getAbsolutePath()))
+            testSourceBase.stream().peek(f -> logger.debug("Processing test directory path: {}", f.getAbsolutePath()))
                 .collect(Collectors.toMap(f -> f.getName(), f -> f)));
       }
     }

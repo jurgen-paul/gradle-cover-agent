@@ -27,29 +27,22 @@ public class TestFileGeneratorImpl implements TestFileGenerator {
     try {
       String className = sourceFile.getName().replace(".java", "").replace(".groovy", "");
       String packageName = extractPackageName(sourceFile);
-      String path = TestFileGeneratorImpl.class.getResource(TEMPLATE_PATH).toURI().getPath();
-      STGroup group = new STGroupFile(path, "UTF-8", '<', '>');
-
-      ST template = group.getInstanceOf(framework);
+      //String path = TestFileGeneratorImpl.class.getResource(TEMPLATE_PATH).toURI().getPath();
+      //STGroup group = new STGroupFile(path, "UTF-8", '<', '>');
+      STGroup group = new STGroupFile(TestFileGeneratorImpl.class.getResource(TEMPLATE_PATH), "UTF-8", '<', '>');     ST template = group.getInstanceOf(framework);
       template.add("package", packageName);
       template.add("className", className);
 
       String suffix = framework.equalsIgnoreCase("spockframework") ? "Spec.groovy" : "Test.java";
       String packagePath = packageName != null ? packageName.replace('.', File.separatorChar) : "";
-
-      testSourceDirectory.keySet().forEach(k -> logger.info("DDDD {} HERE {}",k,testSourceDirectory.get(k)));
-
       File packageDir = new File(testSourceDirectory.get(translate(framework)).getAbsolutePath(), packagePath);
-      logger.info("DDDD The root directory to write file to will be {}", packageDir.getAbsolutePath());
       if (!packageDir.exists()) {
         if (!packageDir.mkdirs()) {
           logger.error("Failed to create package directories: {}", packageDir.getAbsolutePath());
           return Optional.empty();
         }
       }
-      logger.info("The root directory to write file to will be {}", packageDir.getAbsolutePath());
-      logger.info("its there {}", packageDir.exists());
-
+      logger.debug("The root directory to write the test file to will be {}", packageDir.getAbsolutePath());
 
       File testFile = new File(packageDir, className + suffix);
       try (FileWriter writer = new FileWriter(testFile)) {
@@ -64,10 +57,7 @@ public class TestFileGeneratorImpl implements TestFileGenerator {
 
   private static String translate(String framework) {
     return switch (framework.toLowerCase()) {
-      case "junit4" -> JAVA_KEY;
-      case "junit5" -> JAVA_KEY;
-      case "junit3" -> JAVA_KEY;
-      case "testng" -> JAVA_KEY;
+      case "junit4", "junit5", "junit3", "testng" -> JAVA_KEY;
       case "spockframework" -> GROOVY_KEY;
       default -> throw new IllegalArgumentException("Unknown framework: " + framework);
     };

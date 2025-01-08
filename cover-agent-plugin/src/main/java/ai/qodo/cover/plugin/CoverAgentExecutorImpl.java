@@ -14,16 +14,6 @@ public class CoverAgentExecutorImpl implements CoverAgentExecutor {
   private final int iterations;
   private final Model model;
 
-  @Override
-  public String toString() {
-    return "CoverAgentExecutor{" +
-        "coverAgentBinaryPath='" + coverAgentBinaryPath + '\'' +
-        ", coverage=" + coverage +
-        ", iterations=" + iterations +
-        ", model=" + model +
-        '}';
-  }
-
   private CoverAgentExecutorImpl(Builder builder) {
     this.coverAgentBinaryPath = builder.coverAgentBinaryPath;
     this.model = builder.model;
@@ -33,6 +23,12 @@ public class CoverAgentExecutorImpl implements CoverAgentExecutor {
 
   public static CoverAgentExecutorImpl.Builder builder() {
     return new CoverAgentExecutorImpl.Builder();
+  }
+
+  @Override
+  public String toString() {
+    return "CoverAgentExecutor{" + "coverAgentBinaryPath='" + coverAgentBinaryPath + '\'' + ", coverage=" + coverage
+        + ", iterations=" + iterations + ", model=" + model + '}';
   }
 
   public String execute(Project project, String sourceFile, String testFile, String jacocoReportPath,
@@ -53,7 +49,6 @@ public class CoverAgentExecutorImpl implements CoverAgentExecutor {
 
   private Action<ExecSpec> getExecSpecAction(String sourceFile, String testFile, String jacocoReportPath,
                                              String commandString, String projectPath) {
-    //TODO: refactor need really just the model string to pass to command and base url
     return (ExecSpec execSpec) -> {
       if (model.getApiKey() != null) {
         execSpec.environment(OPENAI_API_KEY, model.getApiKey());
@@ -61,8 +56,8 @@ public class CoverAgentExecutorImpl implements CoverAgentExecutor {
       execSpec.commandLine(coverAgentBinaryPath, "--source-file-path=" + sourceFile, "--test-file-path=" + testFile,
           "--code-coverage-report-path=" + jacocoReportPath, "--test-command=" + commandString,
           "--test-command-dir=" + projectPath, "--coverage-type=jacoco", "--desired-coverage=" + coverage,
-          "--max-iterations=" + iterations, "--api_base=" + model.getBaseUrl(),
-          "--llm_model=" + model.getModelType().getModelName());
+          "--max-iterations=" + iterations, "--api-base=" + model.getBaseUrl(),
+          "--model=" + model.getModelType().getFullName());
       execSpec.setWorkingDir(projectPath);
     };
   }
