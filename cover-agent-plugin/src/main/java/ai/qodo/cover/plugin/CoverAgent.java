@@ -1,10 +1,6 @@
 package ai.qodo.cover.plugin;
 
-import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O;
-
 import com.google.gson.Gson;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,47 +29,32 @@ public class CoverAgent {
   private final List<String> javaSourceDir = new ArrayList<>();
   private final List<File> javaSourceFiles = new ArrayList<>();
   private final List<File> javaTestSourceFiles = new ArrayList<>();
-  private final String apiKey;
-  private final String wanDBApiKey;
-  private final int iterations;
-  private final int coverage;
-  private final String coverAgentBinaryPath;
+  private final ModelPrompter modelPrompter;
   private final Project project;
   private final Logger logger;
-  private final OpenAiChatModel.OpenAiChatModelBuilder openAiChatModelBuilder;
   private final Map<File, String> testToSourceFileMatches = new HashMap<>();
-  private ModelPrompter modelPrompter;
+  private final DependencyHelper dependencyHelper;
   private Optional<String> javaClassPath = Optional.empty();
   private Optional<String> javaTestClassPath = Optional.empty();
   private String projectPath;
   private Optional<String> javaClassDir = Optional.empty();
   private String buildDirectory;
-  private CoverAgentExecutor coverAgentExecutor;
   private Optional<String> javaCompileCommand = Optional.empty();
   private Optional<String> javaTestCompileCommand = Optional.empty();
-  private DependencyHelper dependencyHelper;
+
   public CoverAgent(CoverAgentBuilder builder) {
-    this.apiKey = builder.getApiKey();
-    this.wanDBApiKey = builder.getWanDBApiKey();
-    this.iterations = builder.getIterations();
-    this.coverage = builder.getCoverage();
-    this.coverAgentBinaryPath = builder.getCoverAgentBinaryPath();
     this.modelPrompter = builder.getModelPrompter();
     this.javaClassPath = builder.getJavaClassPath();
     this.javaTestClassPath = builder.getJavaTestClassPath();
     this.projectPath = builder.getProjectPath();
     this.javaClassDir = builder.getJavaClassDir();
     this.buildDirectory = builder.getBuildDirectory();
-    this.coverAgentExecutor = builder.getCoverAgentExecutor();
     this.project = builder.getProject();
     this.logger = project.getLogger();
-    this.openAiChatModelBuilder = builder.openAiChatModelBuilder();
     this.dependencyHelper = new DependencyHelper(this.project, this.logger);
   }
 
   public void init() {
-    initModelPrompter();
-    initExecutor();
     initDirectories();
     initClassPathSources();
     if (generateMissingTestFiles()) {
@@ -91,13 +72,13 @@ public class CoverAgent {
 
   private boolean generateMissingTestFiles() {
     String framework = detectTestFramework(project);
-    logger.debug("Framework to use is {}", framework);
+    logger.info("Testing Framework to use is {}", framework);
 
     SourceMatchResult result = findMatchingSourceFiles(javaTestSourceFiles);
     testToSourceFileMatches.putAll(result.testToSourceMap());
-    //Map<File, String> completeMapping = result.testToSourceMap();
     for (File sourceFile : result.remainingSourceFiles()) {
-      processTestFileGeneration(sourceFile, framework, testToSourceFileMatches);
+      modelPrompter.getTestFileGenerator().generate(sourceFile, framework)
+          .ifPresent(file -> testToSourceFileMatches.put(file, sourceFile.getAbsolutePath()));
     }
     return !result.remainingSourceFiles().isEmpty();
   }
@@ -137,17 +118,6 @@ public class CoverAgent {
         javaSourceFiles.add(srcDir);
       }
     }
-  }
-
-  private void initExecutor() {
-    coverAgentExecutor = new CoverAgentExecutor.Builder().coverAgentBinaryPath(coverAgentBinaryPath).apiKey(apiKey)
-        .wanDBApiKey(wanDBApiKey).coverage(coverage).iterations(iterations).build();
-  }
-
-  private void initModelPrompter() {
-    ChatLanguageModel model =
-        openAiChatModelBuilder.apiKey(this.apiKey).modelName(GPT_4_O).maxTokens(MAX_TOKENS).build();
-    this.modelPrompter = new ModelPrompter(logger, model, new ModelUtility(logger));
   }
 
   private void initDirectories() {
@@ -197,8 +167,8 @@ public class CoverAgent {
   }
 
   private String javaAgentCommand(String jacocExecPath) throws CoverError {
-    String standAloneJunit = dependencyHelper
-        .findNeededJars("org.junit.platform:junit-platform-console-standalone:1.11.0").get(0);
+    String standAloneJunit =
+        dependencyHelper.findNeededJars("org.junit.platform:junit-platform-console-standalone:1.11.0").get(0);
     String jacocoAgent = dependencyHelper.findNeededJars("org.jacoco:org.jacoco.agent:0.8.11:runtime").get(0);
     String builder = "";
     if (javaTestClassPath.isPresent()) {
@@ -238,8 +208,6 @@ public class CoverAgent {
       ConfigurationContainer container = project.getConfigurations();
       Configuration testConfiguration = container.getByName("testImplementation");
       DependencySet dependencies = testConfiguration.getDependencies();
-
-
       List<FrameworkCheck> frameworkChecks =
           List.of(new FrameworkCheck("spockframework"), new FrameworkCheck("testng"), new FrameworkCheck("junit5"),
               new FrameworkCheck("junit4", "4."), new FrameworkCheck("junit3", "3."));
@@ -257,37 +225,9 @@ public class CoverAgent {
   }
 
   public void invoke() {
-    logger.debug("Path to coverAgentBinaryPath {}", coverAgentBinaryPath);
+    logger.debug("The executor  {}", modelPrompter.getCoverAgentExecutor());
     executeTestsWithCoverage(testToSourceFileMatches);
   }
-
-  private void processTestFileGeneration(File sourceFile, String framework, Map<File, String> completeMapping) {
-    try {
-      TestFileResponse response = modelPrompter.generateTestFile(sourceFile, framework);
-      logger.info("Output the response {}", new Gson().toJson(response));
-      File testFile = createTestFile(response);
-      completeMapping.put(testFile, sourceFile.getAbsolutePath());
-    } catch (CoverError e) {
-      logger.error("Failed to generate test file for source file {}", sourceFile, e);
-    }
-  }
-
-  private File createTestFile(TestFileResponse response) throws CoverError {
-    try {
-      File testFile = new File(response.path(), response.fileName());
-      File parentDir = testFile.getParentFile();
-
-      if (!parentDir.exists() && !parentDir.mkdirs()) {
-        throw new CoverError("Failed to create directory structure for test file: " + testFile);
-      }
-
-      Files.writeString(testFile.toPath(), response.contents());
-      return testFile;
-    } catch (IOException e) {
-      throw new CoverError("Failed to create test file: " + response.fileName(), e);
-    }
-  }
-
 
   private void testJavaCompileCommand() {
     JavaCompile javaCompileTask = project.getTasks().withType(JavaCompile.class).findByName("compileTestJava");
@@ -331,8 +271,8 @@ public class CoverAgent {
             String.format("%s;%s;%s;%s", javaCompileCommand.get(), javaTestCompileCommand.get(), javaAgentCommand,
                 jacocoJavaReportCommand);
 
-        String success =
-            coverAgentExecutor.execute(this.project, sourceFile, testFile, jacocoReportPath, command, projectPath);
+        String success = modelPrompter.getCoverAgentExecutor()
+            .execute(this.project, sourceFile, testFile, jacocoReportPath, command, projectPath);
 
         logger.debug("Success output from cover-agent: {}", success);
       } catch (CoverError e) {

@@ -155,7 +155,7 @@ class CoverAgentSpec extends Specification {
         def project = Mock(Project)
         def logger = Mock(Logger)
         def modelPrompter = Mock(ModelPrompter)
-        def coverAgentExecutor = Mock(CoverAgentExecutor)
+        def coverAgentExecutor = Mock(CoverAgentExecutorImpl)
         def builder = new CoverAgentBuilder()
                 .apiKey("validApiKey")
                 .wanDBApiKey("validWanDBApiKey")

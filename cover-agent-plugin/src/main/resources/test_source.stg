@@ -1,0 +1,78 @@
+spockframework(package, className) ::= <<
+<if(package)>package <package>
+<endif>
+import spock.lang.Specification
+
+class <className>Spec extends Specification {
+    def "template generated"() {
+        expect: true
+    }
+
+}
+
+>>
+junit5(package, className) ::= <<
+<if(package)>package <package>
+<endif>
+
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class <className>Test {
+    @Test
+    @DisplayName("template generated")
+    void stub() {
+        assertEquals(1,1);
+    }
+
+}
+
+>>
+junit4(package, className) ::= <<
+<if(package)>package <package>
+<endif>
+
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+public class <className>Test {
+    @Test
+    void stub() {
+        assertEquals(1,1);
+    }
+
+}
+
+>>
+junit3(package, className) ::= <<
+<if(package)>package <package>
+<endif>
+
+import junit.framework.TestCase;
+
+public class <className>Test extends TestCase {
+    @Test
+    void testStub() {
+        assertEquals(1,1);
+    }
+
+}
+
+>>
+testng(package, className) ::= <<
+<if(package)>package <package>
+<endif>
+
+import org.testng.annotations.Test;
+import static org.testng.Assert.*;
+
+
+public class <className>Test  {
+    @Test
+    void testStub() {
+        assertEquals(1,1);
+    }
+
+}
+
+>>

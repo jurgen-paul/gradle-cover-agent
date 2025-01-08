@@ -27,7 +27,7 @@ class CoverAgentExtensionSpec extends Specification {
         extension.getCoverage() == intProperty
         extension.getCoverAgentBinaryPath() == stringProperty
         extension.getIterations() == intProperty
-        extension.getWanDBApiKey() == stringProperty
+        extension.getModel() == stringProperty
     }
 
 }

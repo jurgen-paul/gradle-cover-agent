@@ -13,7 +13,7 @@ class CoverAgentTaskSpec extends Specification {
     def "test default properties"() {
         expect:
         !task.apiKey.isPresent()
-        !task.wanDBApiKey.isPresent()
+        !task.model.isPresent()
         !task.iterations.isPresent()
         !task.coverAgentBinaryPath.isPresent()
         !task.coverage.isPresent()
@@ -22,14 +22,14 @@ class CoverAgentTaskSpec extends Specification {
     def "test setting properties"() {
         given:
         task.apiKey.set("test-api-key")
-        task.wanDBApiKey.set("test-wandb-api-key")
+        task.model.set("test-wandb-api-key")
         task.iterations.set(10)
         task.coverAgentBinaryPath.set("/path/to/binary")
         task.coverage.set(80)
 
         expect:
         task.apiKey.get() == "test-api-key"
-        task.wanDBApiKey.get() == "test-wandb-api-key"
+        task.model.get() == "test-wandb-api-key"
         task.iterations.get() == 10
         task.coverAgentBinaryPath.get() == "/path/to/binary"
         task.coverage.get() == 80
@@ -38,7 +38,7 @@ class CoverAgentTaskSpec extends Specification {
     def "test performTask"() {
         given:
         task.apiKey.set("test-api-key")
-        task.wanDBApiKey.set("test-wandb-api-key")
+        task.model.set("test-wandb-api-key")
         task.iterations.set(10)
         task.coverAgentBinaryPath.set("/path/to/binary")
         task.coverage.set(80)
@@ -53,7 +53,7 @@ class CoverAgentTaskSpec extends Specification {
         CoverAgentBuilder.builder() >> builderMock
         builderMock.project(_) >> builderMock
         builderMock.apiKey(_) >> builderMock
-        builderMock.wanDBApiKey(_) >> builderMock
+        builderMock.model(_) >> builderMock
         builderMock.iterations(_) >> builderMock
         builderMock.coverAgentBinaryPath(_) >> builderMock
         builderMock.coverage(_) >> builderMock

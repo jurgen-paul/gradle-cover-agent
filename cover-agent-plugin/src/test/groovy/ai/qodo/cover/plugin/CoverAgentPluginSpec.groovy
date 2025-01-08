@@ -17,6 +17,7 @@ class CoverAgentPluginSpec extends Specification {
     File hava
     File test
     File thava
+    File groovyTests
     File mainJavaFile
     File testJavaFile
     File testCalcJavaFile
@@ -55,17 +56,27 @@ class CoverAgentPluginSpec extends Specification {
         thava = new File(test, 'java')
         thava.mkdirs()
 
+        groovyTests = new File(test, 'groovy')
+        groovyTests.mkdirs()
+
+
         String packagePath = 'ai/qodo/test'
         File sourcePackage = new File(hava, packagePath)
         sourcePackage.mkdirs()
         File testPackage = new File(thava, packagePath)
         testPackage.mkdirs()
 
+        File groovyTestPackage = new File(groovyTests, packagePath)
+        groovyTestPackage.mkdirs()
+
+
         copyTo('src/test/resources/Main.java', new File(sourcePackage, 'Main.java'))
         copyTo('src/test/resources/Calc.java', new File(sourcePackage, 'Calc.java'))
+        copyTo('src/test/resources/Utility.java', new File(sourcePackage, 'Utility.java'))
         copyTo('src/test/resources/MainTest.java', new File(testPackage, 'MainTest.java'))
         copyTo('src/test/resources/CalcTest.java', new File(testPackage, 'CalcTest.java'))
-        copyTo('src/test/resources/Utility.java', new File(sourcePackage, 'Utility.java'))
+        //copyTo('src/test/resources/Fibonacci.java', new File(sourcePackage, 'Fibonacci.java'))
+        copyTo('src/test/resources/CalcTest2.groovy', new File(groovyTestPackage, 'CalcTest2.groovy'))
 
         mockCoverAgentFile = new File(testProjectDir, 'mock.sh')
 
@@ -92,18 +103,18 @@ class CoverAgentPluginSpec extends Specification {
      * */
     def "lifecycle test of gradle plugin will not make it complete based on API KEY invalid"() {
         // change up this map if you want to see full lifecycle you need to set your OPENAI_API_KEY
-        //Map map = Map.of("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"))
-        Map map = Map.of("OPENAI_API_KEY", "I_AM_BAD_KEY")
+        Map map = Map.of("OPENAI_API_KEY", System.getenv("OPENAI_API_KEY"))
+        //Map map = Map.of("OPENAI_API_KEY", "I_AM_BAD_KEY")
         when:
-        map.get("OPENAI_API_KEY")
-//        def result = GradleRunner.create()
-//                .withProjectDir(testProjectDir)
-//                .withArguments('coverAgent', '--info')
-//                .withEnvironment(map)
-//                .withPluginClasspath()
-//                .forwardStdOutput(new PrintWriter(System.out))
-//                .forwardStdError(new PrintWriter(System.err))
-//                .build()
+        String s = map.get("OPENAI_API_KEY")
+        def result = GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments('coverAgent', '--info')
+                //.withEnvironment(map)
+                .withPluginClasspath()
+                .forwardStdOutput(new PrintWriter(System.out))
+                .forwardStdError(new PrintWriter(System.err))
+                .build()
 
         then:
         noExceptionThrown()

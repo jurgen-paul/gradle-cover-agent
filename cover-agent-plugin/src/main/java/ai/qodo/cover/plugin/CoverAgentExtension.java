@@ -7,18 +7,21 @@ import org.gradle.api.provider.Property;
 public abstract class CoverAgentExtension {
 
     private final Property<String> apiKey;
-    private final Property<String> wanDBApiKey;
+    private final Property<String> model;
     private final Property<Integer> iterations;
     private final Property<Integer> coverage;
     private final Property<String> coverAgentBinaryPath;
+    private final Property<String> modelBaseUrl;
+
 
     public CoverAgentExtension(Project project) {
         ObjectFactory factory = project.getObjects();
         this.apiKey = factory.property(String.class);
-        this.wanDBApiKey = factory.property(String.class);
+        this.model = factory.property(String.class);
         this.iterations = factory.property(Integer.class);
         this.coverage = factory.property(Integer.class);
         this.coverAgentBinaryPath = factory.property(String.class);
+        this.modelBaseUrl = factory.property(String.class);
     }
 
     public Property<Integer> getIterations() {
@@ -29,8 +32,8 @@ public abstract class CoverAgentExtension {
         return apiKey;
     }
 
-    public Property<String> getWanDBApiKey() {
-        return wanDBApiKey;
+    public Property<String> getModel() {
+        return model;
     }
 
     public Property<Integer> getCoverage() {
@@ -41,4 +44,7 @@ public abstract class CoverAgentExtension {
         return coverAgentBinaryPath;
     }
 
+    public Property<String> getModelBaseUrl() {
+        return modelBaseUrl;
+    }
 }

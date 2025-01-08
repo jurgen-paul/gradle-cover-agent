@@ -24,7 +24,7 @@ class CoverAgentBuilderSpec extends Specification {
                 .projectPath("/path/to/project")
                 .javaClassDir(Optional.of("/path/to/class/dir"))
                 .buildDirectory("/path/to/build")
-                .coverAgentExecutor(Mock(CoverAgentExecutor))
+                .coverAgentExecutor(Mock(CoverAgentExecutorImpl))
                 .project(project)
 
         when:
@@ -33,7 +33,7 @@ class CoverAgentBuilderSpec extends Specification {
         then:
         1 * project.getLogger() >> logger
         coverAgent.apiKey == "testApiKey"
-        coverAgent.wanDBApiKey == "testWanDBApiKey"
+        coverAgent.model == "testWanDBApiKey"
         coverAgent.iterations == 5
         coverAgent.coverage == 80
         coverAgent.coverAgentBinaryPath == "/path/to/binary"

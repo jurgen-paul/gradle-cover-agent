@@ -8,7 +8,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.TempDir
 
-class CoverAgentExecutorSpec extends Specification {
+class CoverAgentExecutorImplSpec extends Specification {
     @TempDir
     File testProjectDir
 
@@ -36,9 +36,9 @@ class CoverAgentExecutorSpec extends Specification {
         Project project = Mock(Project)
         ExecResult execResult = Mock(ExecResult)
 
-        CoverAgentExecutor executor = new CoverAgentExecutor.Builder()
+        CoverAgentExecutorImpl executor = new CoverAgentExecutorImpl.Builder()
                 .coverAgentBinaryPath(mockCoverAgentFile.absolutePath)
-                .wanDBApiKey("valid_wandb_api_key")
+                .model("valid_wandb_api_key")
                 .apiKey("valid_api_key")
                 .coverage(1)
                 .iterations(2)
@@ -58,9 +58,9 @@ class CoverAgentExecutorSpec extends Specification {
         Project project = Mock(Project)
         ExecResult execResult = Mock(ExecResult)
 
-        CoverAgentExecutor executor = new CoverAgentExecutor.Builder()
+        CoverAgentExecutorImpl executor = new CoverAgentExecutorImpl.Builder()
                 .coverAgentBinaryPath(mockCoverAgentFile.absolutePath)
-                .wanDBApiKey("valid_wandb_api_key")
+                .model("valid_wandb_api_key")
                 .apiKey("valid_api_key")
                 .coverage(1)
                 .iterations(2)
@@ -80,9 +80,9 @@ class CoverAgentExecutorSpec extends Specification {
         Project project = Mock(Project)
         ExecResult execResult = Mock(ExecResult)
         ExecSpec spec = Mock(ExecSpec)
-        CoverAgentExecutor executor = new CoverAgentExecutor.Builder()
+        CoverAgentExecutorImpl executor = new CoverAgentExecutorImpl.Builder()
                 .coverAgentBinaryPath(mockCoverAgentFile.absolutePath)
-                .wanDBApiKey(wandbkey)
+                .model(wandbkey)
                 .apiKey(apiKey)
                 .coverage(1)
                 .iterations(2)
@@ -94,8 +94,8 @@ class CoverAgentExecutorSpec extends Specification {
         action.execute(spec)
 
         then:
-        wanCall * spec.environment(CoverAgentExecutor.WANDB_API_KEY, wandbkey)
-        apiCall * spec.environment(CoverAgentExecutor.OPENAI_API_KEY, apiKey)
+        wanCall * spec.environment(CoverAgentExecutorImpl.WANDB_API_KEY, wandbkey)
+        apiCall * spec.environment(CoverAgentExecutorImpl.OPENAI_API_KEY, apiKey)
         1 * spec.setWorkingDir("projectPath")
 
         where:

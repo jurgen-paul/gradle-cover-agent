@@ -4,3 +4,5 @@
 .codiumai
 /src/test/resources/jacocoTestReport.csv
 /.qodo/
+
+.qodo

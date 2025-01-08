@@ -31,4 +31,34 @@ public class ModelUtility {
     }
     return contents;
   }
+
+
+  public File createTestFile(TestFileResponse response) throws CoverError {
+    try {
+      String path = response.path();
+      String fileName = response.fileName();
+
+      boolean hasFileExtension = path.lastIndexOf('.') > path.lastIndexOf(File.separator);
+
+      File testFile;
+      if (hasFileExtension) {
+        // If path contains file extension, get the parent directory
+        File fullPath = new File(path);
+        testFile = new File(fullPath.getParent(), fileName);
+      } else {
+        testFile = new File(path, fileName);
+      }
+
+      File parentDir = testFile.getParentFile();
+      if (!parentDir.exists() && !parentDir.mkdirs()) {
+        throw new CoverError("Failed to create directory structure for test file: " + testFile);
+      }
+
+      Files.writeString(testFile.toPath(), response.contents());
+      return testFile;
+    } catch (IOException e) {
+      throw new CoverError("Failed to create test file: " + response.fileName(), e);
+    }
+  }
+
 }

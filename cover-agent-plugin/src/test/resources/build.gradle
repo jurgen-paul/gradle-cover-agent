@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'ai.qodo.plugin.cover-agent'
+    id 'groovy'
 }
 
 group = 'com.davidparry'
@@ -12,6 +13,9 @@ repositories {
 }
 
 dependencies {
+    testImplementation platform("org.spockframework:spock-bom:2.3-groovy-4.0")
+    testImplementation "org.spockframework:spock-core"
+    testImplementation "org.spockframework:spock-junit4"
 
     testImplementation platform('org.junit:junit-bom:5.11.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -19,8 +23,11 @@ dependencies {
 coverAgent {
     apiKey = System.getenv("OPENAI_API_KEY")
     coverAgentBinaryPath = "./mock.sh"
+     //model = "gpt-4o"
+    model = "llama2"
     coverage = 2
     iterations = 1
+    modelBaseUrl = "http://localhost:11434"
 }
 
 test {
